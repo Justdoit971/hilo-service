@@ -1,0 +1,29 @@
+{
+  "slug": "vista-serena",
+  "name": "Vista Serena Miches",
+  "langues_supportees": ["ES", "EN", "FR"],
+  "voice_charter": {
+    "max_emojis": 1,
+    "default_formality": "vouvoiement",
+    "signature": "François\nVista Serena — Miches, R.D.",
+    "signature_public_comments": false
+  },
+  "sources_canoniques": [
+    "instagram", "whatsapp", "google_ads",
+    "seo_organic", "referral", "email", "direct"
+  ],
+  "qualifications": ["cold", "warm", "hot", "vendu", "perdu"],
+  "produits_interet": [
+    "vista-serena-terrain", "talipot-vefa", "les-deux", "autre"
+  ],
+  "communication_rules": {
+    "confotur_spontaneous_mention": false,
+    "no_price_in_public_comments": true,
+    "red_flag_triggers": [
+      "filename_language_mismatch",
+      "price_surface_divergence_between_sources",
+      "brochure_url_not_in_canonical",
+      "fact_absent_from_canonical"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "version": "1.1.4",
+    "tenant": "vista-serena",
+    "last_verified": "2026-06-20",
+    "note": "Snapshot local pour POC Hilo. En prod V1.1 : appel Mira temps réel."
+  },
+  "organization": {
+    "name": "Vista Serena Miches",
+    "url": "https://www.michesvistaserena.com",
+    "whatsapp": "18299017011",
+    "whatsapp_url": "https://wa.me/18299017011",
+    "instagram": "@miches.vistaserena"
+  },
+  "distances": {
+    "playa_esmeralda": {"minutes": 15},
+    "four_seasons_tropicalia": {"minutes": 20},
+    "punta_cana_airport": {"minutes": 120, "note": "annoncer ~2h"}
+  },
+  "brochures_v3": {
+    "base_url": "https://assets.zyrosite.com/YyvDnJLQw5Fy21bn/",
+    "es": "es--brochure-vista-serena-2026_v3-2Oi193YCSuO19Hz0.pdf",
+    "en": "en--brochure-vista-serena-2026_v3-OmN6E4tSe3lIQFRw.pdf",
+    "fr": "fr--brochure-vista-serena-2026_v3-SQmFKzRifhFYKH9f.pdf"
+  },
+  "talipot": {
+    "website": "talipot-ecolodge.com",
+    "founder": "François Bénard uniquement"
+  }
+}
