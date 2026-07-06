@@ -146,6 +146,18 @@ alter table hilo.drafts        enable row level security;
 alter table hilo.audit_log     enable row level security;
 
 -- ----------------------------------------------------------------------------
+-- 7bis. Privileges API : un schema custom n'herite d'AUCUN grant (contrairement
+--       a public). Sans ces GRANT, PostgREST repond 42501 permission denied
+--       meme avec la service_role key (vecu POC 2026-07-06).
+--       Volontairement RIEN pour anon/authenticated : fail-closed conserve.
+-- ----------------------------------------------------------------------------
+grant usage on schema hilo to service_role;
+grant all privileges on all tables in schema hilo to service_role;
+grant all privileges on all sequences in schema hilo to service_role;
+alter default privileges in schema hilo grant all on tables to service_role;
+alter default privileges in schema hilo grant all on sequences to service_role;
+
+-- ----------------------------------------------------------------------------
 -- 8. Trigger updated_at (idempotent)
 -- ----------------------------------------------------------------------------
 create or replace function hilo.set_updated_at()
