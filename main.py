@@ -225,13 +225,33 @@ def process_incoming_message(payload: dict):
             logger.warning(f"RED FLAGS detected: {red_flags}")
 
         # 6. Générer draft
-        draft_text = generate_draft(
-            message=content,
-            profile=profile,
-            canonical=CANONICAL,
-            tenant_config=tenant_config,
-            lead_context={"lead": lead},
-        )
+        draft_engine = "template"
+        try:
+            from engine.llm_draft import generer_draft_llm
+            draft_text = generer_draft_llm(
+                message=content,
+                profile=profile,
+                canonical=CANONICAL,
+                tenant_config=tenant_config,
+                lead_context={"lead": lead},
+            )
+            draft_engine = "llave"
+        except Exception as _e:
+            logger.warning(f"Draft LLM indisponible ({_e}), fallback template")
+            draft_text = generate_draft(
+                message=content,
+                profile=profile,
+                canonical=CANONICAL,
+                tenant_config=tenant_config,
+                lead_context={"lead": lead},
+            )
+
+        # Gate consultative : avertissements ajoutes a la note (humain valide)
+        try:
+            from engine.validators import validate_draft
+            red_flags = list(red_flags) + validate_draft(draft_text, CANONICAL)
+        except Exception:
+            pass
 
         # 7. Sauvegarder le draft
         draft = save_draft(
@@ -242,6 +262,7 @@ def process_incoming_message(payload: dict):
             hilo_analysis={
                 "profile": profile,
                 "red_flags": red_flags,
+                "draft_engine": draft_engine,
                 "canonical_version": CANONICAL["_meta"]["version"],
             },
         )
