@@ -100,6 +100,7 @@ def health():
 async def chatwoot_webhook(
     payload: ChatwootWebhookPayload,
     background_tasks: BackgroundTasks,
+    request: Request,
 ):
     """
     Handler principal des webhooks Chatwoot.
@@ -107,6 +108,11 @@ async def chatwoot_webhook(
     On ne traite que les messages entrants (message_type == 'incoming').
     Le traitement est mis en background pour répondre 200 vite à Chatwoot.
     """
+    # Regle 11 : secret partage sur l'URL du webhook
+    _secret = os.getenv("HILO_WEBHOOK_SECRET")
+    if _secret and request.query_params.get("token") != _secret:
+        raise HTTPException(status_code=401, detail="invalid webhook token")
+
     logger.info(f"Webhook received: event={payload.event}")
 
     # On ne gère que message_created pour le POC
