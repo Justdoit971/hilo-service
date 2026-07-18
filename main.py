@@ -37,6 +37,7 @@ from db.supabase_client import (
     save_message,
     save_draft,
     log_audit,
+    mirror_lead_to_public,
 )
 
 # ============================================
@@ -186,6 +187,13 @@ def process_incoming_message(payload: dict):
             channel=inbox.get("channel_type", "instagram_dm"),
             profile=profile,
         )
+
+        # 2b. Miroir vers public.leads (console + Veris) - non bloquant
+        try:
+            _pub_id = mirror_lead_to_public(tenant_slug, sender, profile, lead)
+            logger.info(f"Lead mirrored to public.leads: {_pub_id}")
+        except Exception as _e:
+            logger.exception(f"Mirror public.leads failed (non-blocking): {_e}")
 
         # 3. Conversation
         conversation = save_conversation(

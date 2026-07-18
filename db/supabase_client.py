@@ -245,3 +245,68 @@ def log_audit(
     }
     resp = client.table("audit_log").insert(entry).execute()
     return resp.data[0]
+
+
+# ============================================
+# Public schema (public.leads) - miroir console / Veris
+# ============================================
+_public_client: Optional[Client] = None
+
+
+def get_public_client() -> Client:
+    """Client Supabase schema PUBLIC (pas hilo) pour ecrire dans public.leads,
+    la table lue par la console Soriya et Veris."""
+    global _public_client
+    if _public_client is None:
+        if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+            raise RuntimeError(
+                "SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY doivent etre configures")
+        _public_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    return _public_client
+
+
+def mirror_lead_to_public(tenant_id, sender, profile, lead_hilo):
+    """Recopie / met a jour le lead dans public.leads via les MEMES RPC que la
+    console (lead_insert / lead_update / leads_ingest_*). Dedup par huella
+    'cw:<chatwoot_contact_id>'. Retourne le lead_id public (ou None)."""
+    pub = get_public_client()
+    sender = sender or {}
+    lead_hilo = lead_hilo or {}
+    contact_id = str(sender.get("id", ""))
+    if not contact_id:
+        return None
+
+    huella = "cw:%s" % contact_id
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    changes = {
+        "name": lead_hilo.get("name") or sender.get("name"),
+        "source": profile.get("source", "instagram"),
+        "language": profile.get("language", "ES"),
+        "contact_type": profile.get("type", "curieux"),
+        "produit_interet": lead_hilo.get("produit_interet", "vista-serena-terrain"),
+        "qualification": profile.get("qualification", "cold"),
+        "next_step": lead_hilo.get("next_step", "Suivi"),
+        "last_interaction": now_iso,
+    }
+
+    seen = pub.rpc("leads_ingest_get", {"t": tenant_id, "h": huella}).execute()
+    seen_data = seen.data if getattr(seen, "data", None) else None
+
+    if seen_data and isinstance(seen_data, dict) and seen_data.get("lead_id"):
+        pub_lead_id = seen_data["lead_id"]
+        pub.rpc("lead_update", {"t": tenant_id, "lid": pub_lead_id,
+                                "changes": changes, "who": "hilo-service"}).execute()
+    else:
+        changes["date_contact"] = now_iso[:10]
+        ins = pub.rpc("lead_insert", {"t": tenant_id, "changes": changes,
+                                      "who": "hilo-service"}).execute()
+        pub_lead_id = ins.data
+        if pub_lead_id:
+            pub.rpc("leads_ingest_add", {"t": tenant_id, "h": huella,
+                                         "lid": pub_lead_id, "who_": "hilo-service"}).execute()
+
+    if pub_lead_id and profile.get("source") in ("instagram", "whatsapp"):
+        pub.table("leads").update({"is_attributable_ig": 1}).eq("tenant_id", tenant_id).eq("lead_id", pub_lead_id).execute()
+
+    return pub_lead_id
